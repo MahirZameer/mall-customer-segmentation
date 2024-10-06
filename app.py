@@ -4,6 +4,20 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
+# Custom CSS for fonts
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400&display=swap');
+
+    html, body, [class*="st-"]  {
+        font-family: 'Roboto', sans-serif;
+    }
+    h1, h2, h3 {
+        font-family: 'Montserrat', sans-serif;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 # Add the mall photo as a banner
 st.image("https://images.pexels.com/photos/2767756/pexels-photo-2767756.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260", 
          use_column_width=True)
