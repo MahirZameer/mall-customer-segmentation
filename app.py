@@ -58,6 +58,14 @@ dataset['Cluster'] = clusters
 st.subheader('🧩 Clustered Dataset')
 st.write(dataset[['CustomerID', 'Gender', 'Age', 'Annual Income (k$)', 'Spending Score (1-100)', 'Cluster']])
 
+# **Cluster Analysis: Group by Cluster and Calculate Averages**
+st.subheader("📊 Cluster Analysis")
+cluster_summary = dataset.groupby('Cluster').mean()[['Age', 'Annual Income (k$)', 'Spending Score (1-100)']]
+st.write(cluster_summary)
+
+# Optionally, add a bar chart to visualize the cluster averages
+st.bar_chart(cluster_summary)
+
 # Visualize the clusters
 st.subheader('🎨 Cluster Visualization')
 x_axis = st.sidebar.selectbox('X-Axis', ['Annual Income (k$)', 'Age', 'Spending Score (1-100)'])
