@@ -3,9 +3,6 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
-# Title and introduction
-st.title('🌟 Mall Customer Segmentation using K-Means 🌟')
-
 # Custom CSS for fonts
 st.markdown("""
     <style>
@@ -49,6 +46,17 @@ cluster_names = {
     3: "Middle-aged, Moderate Income, High Spending",
     4: "Young, Low Income, High Spending"
 }
+
+# Function to suggest marketing strategies based on clusters
+def suggest_marketing_strategy(cluster):
+    strategies = {
+        0: "Offer discounts on essential products to encourage more spending.",
+        1: "Promote premium products or loyalty rewards to increase spending.",
+        2: "Send exclusive offers on luxury goods and memberships.",
+        3: "Provide discounts on bundled offers and special services.",
+        4: "Offer trendy and budget-friendly promotions to attract spending."
+    }
+    return strategies[cluster]
 
 # Customer Input Form
 st.header("Customer Input Form 📝")
@@ -97,15 +105,3 @@ if view_customers:
 
     except FileNotFoundError:
         st.write("No customer data available yet.")
-
-# Function to suggest marketing strategies based on clusters
-def suggest_marketing_strategy(cluster):
-    strategies = {
-        0: "Offer discounts on essential products to encourage more spending.",
-        1: "Promote premium products or loyalty rewards to increase spending.",
-        2: "Send exclusive offers on luxury goods and memberships.",
-        3: "Provide discounts on bundled offers and special services.",
-        4: "Offer trendy and budget-friendly promotions to attract spending."
-    }
-    return strategies[cluster]
-
