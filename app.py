@@ -33,6 +33,23 @@ kmeans.fit(X_scaled)
 clusters = kmeans.predict(X_scaled)
 dataset['Cluster'] = clusters
 
+# Define cluster labels and marketing actions
+cluster_labels = {
+    0: "Older, Low Income, Low Spending",
+    1: "Middle-aged, High Income, Low Spending",
+    2: "Young, Moderate Income, High Spending",
+    3: "Middle-aged, High Income, Moderate Spending",
+    4: "Young, Low Income, Moderate Spending"
+}
+
+marketing_actions = {
+    0: "Offer senior discounts and budget-friendly options.",
+    1: "Upsell luxury products, offer membership plans.",
+    2: "Promote exclusive offers and loyalty programs.",
+    3: "Encourage higher spending with tailored promotions.",
+    4: "Target with discounts and promotional events."
+}
+
 # Customer input form
 if page == "Customer Form":
     st.subheader("Customer Input Form")
@@ -54,6 +71,7 @@ if page == "Customer Form":
     # Customer gets a confirmation message
     if st.button('Submit'):
         st.success(f'Thank you, {name}. Your details have been submitted.')
+        st.write(f'You have been placed in Cluster {customer_cluster} ({cluster_labels[customer_cluster]}).')
 
 # Mall Owner Dashboard
 elif page == "Mall Owner Dashboard":
@@ -75,6 +93,12 @@ elif page == "Mall Owner Dashboard":
         st.subheader("Customer Breakdown per Cluster")
         cluster_breakdown = dataset.groupby('Cluster').mean()[['Age', 'Annual Income (k$)', 'Spending Score (1-100)']]
         st.write(cluster_breakdown)
+        
+        # Display marketing actions per cluster
+        st.subheader("Suggested Marketing Actions")
+        for cluster, label in cluster_labels.items():
+            st.write(f"**Cluster {cluster}: {label}**")
+            st.write(marketing_actions[cluster])
         
     else:
         st.error("Incorrect password. Please try again.")
