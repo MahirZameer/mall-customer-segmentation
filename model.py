@@ -1,6 +1,6 @@
 from sklearn.cluster import KMeans
 import joblib
-from data_preprocessing import load_and_clean_data
+from app import load_and_clean_data
 
 def train_and_save_model():
     # Load and preprocess the data
