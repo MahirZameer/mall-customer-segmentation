@@ -4,40 +4,28 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 import joblib
 
-# Load and preprocess the data (previously done in a separate file)
-@st.cache
+# Data preprocessing (use st.cache_data instead of st.cache)
+@st.cache_data
 def load_and_clean_data():
-    # Load the dataset
     dataset = pd.read_csv('Mall.csv')
-    
-    # Clean the data (e.g., handle missing values, encode categorical data)
     dataset['Gender'] = dataset['Gender'].map({'Male': 0, 'Female': 1})  # Convert Gender to numerical
-    
-    # Select relevant features for clustering
     X = dataset[['Gender', 'Age', 'Annual Income (k$)', 'Spending Score (1-100)']].values
-    
-    # Scale the data
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-    
     return X_scaled, scaler
 
-# Train the model
-@st.cache
+# Model training (use st.cache_resource instead of st.cache)
+@st.cache_resource
 def train_model(X_scaled):
-    # Train KMeans with k=5
     kmeans = KMeans(n_clusters=5, init='k-means++', random_state=42)
     kmeans.fit(X_scaled)
-    
-    # Save the model and scaler
     joblib.dump(kmeans, 'kmeans_model.pkl')
     joblib.dump(scaler, 'scaler.pkl')
-    
     return kmeans, scaler
 
-# Load or train the model
+# Load data and train model
 X_scaled, scaler = load_and_clean_data()
-kmeans = train_model(X_scaled)
+kmeans, scaler = train_model(X_scaled)
 
 # Streamlit app interface
 st.title('Mall Customer Segmentation App')
@@ -70,4 +58,9 @@ if st.button("Predict Cluster"):
         st.write("Suggested Action: Offer budget-friendly products.")
     elif predicted_cluster[0] == 1:
         st.write("Suggested Action: Provide exclusive high-end products.")
-    # Add more actions for other clusters here
+    elif predicted_cluster[0] == 2:
+        st.write("Suggested Action: Promote mid-range family-oriented deals.")
+    elif predicted_cluster[0] == 3:
+        st.write("Suggested Action: Target tech-savvy young customers.")
+    elif predicted_cluster[0] == 4:
+        st.write("Suggested Action: Focus on premium and loyalty services.")
