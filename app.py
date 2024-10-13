@@ -2,103 +2,92 @@ import streamlit as st
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-import numpy as np
 import matplotlib.pyplot as plt
 
-# Set K to a fixed value of 5
-K = 5
+# Custom CSS for fonts
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400&display=swap');
 
-# Title and introduction
-st.title('Mall Customer Segmentation App')
+    html, body, [class*="st-"]  {
+        font-family: 'Roboto', sans-serif;
+    }
+    h1, h2, h3 {
+        font-family: 'Montserrat', sans-serif;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-# Add navigation options for the customer and mall owner
-page = st.sidebar.selectbox("Select View", ["Customer Form", "Mall Owner Dashboard"])
+# Add the mall photo as a banner
+st.image("https://images.pexels.com/photos/2767756/pexels-photo-2767756.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260", 
+         use_column_width=True)
 
-# Load Mall.csv dataset for training the KMeans model
+# Title and Introduction
+st.title('🌟 Mall Customer Segmentation using K-Means 🌟')
+st.write("""
+This app uses the **k-means clustering algorithm** to segment customers based on demographic and shopping behavior data.
+""")
+
+# Load the dataset
 dataset = pd.read_csv('Mall.csv')
 
-# Preprocess the dataset (same as before)
+# Data Preprocessing
 dataset['Gender'] = dataset['Gender'].map({'Male': 0, 'Female': 1})
 X = dataset[['Gender', 'Age', 'Annual Income (k$)', 'Spending Score (1-100)']].values
-
-# Scale the data
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# Train the KMeans model with K=5
-kmeans = KMeans(n_clusters=K, random_state=42)
-kmeans.fit(X_scaled)
+# Fixed number of clusters
+n_clusters = 5
 
-# Add the cluster assignment to the dataset
+# Apply K-Means Clustering
+kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+kmeans.fit(X_scaled)
 clusters = kmeans.predict(X_scaled)
 dataset['Cluster'] = clusters
 
-# Define cluster labels and marketing actions
-cluster_labels = {
-    0: "Older, Low Income, Low Spending",
-    1: "Middle-aged, High Income, Low Spending",
-    2: "Young, Moderate Income, High Spending",
-    3: "Middle-aged, High Income, Moderate Spending",
-    4: "Young, Low Income, Moderate Spending"
-}
+# Suggest marketing strategy based on cluster
+def suggest_marketing_strategy(cluster_label):
+    strategies = {
+        0: "Older, Low Income, Low Spending: Suggest discounts and value products to attract.",
+        1: "Middle-aged, High Income, Low Spending: Focus on premium loyalty programs and luxury offers.",
+        2: "Young, Moderate Income, High Spending: Target with trendy products and high-end promotions.",
+        3: "Middle-aged, High Income, Moderate Spending: Offer incentives like mid-tier discounts and loyalty points.",
+        4: "Young, Low Income, Moderate Spending: Offer affordable bundles and special youth-targeted deals.",
+        5: "Older, High Income, High Spending: Promote exclusive luxury items and personalized services."
+    }
+    return strategies.get(cluster_label, "No strategy available")
 
-marketing_actions = {
-    0: "Offer senior discounts and budget-friendly options.",
-    1: "Upsell luxury products, offer membership plans.",
-    2: "Promote exclusive offers and loyalty programs.",
-    3: "Encourage higher spending with tailored promotions.",
-    4: "Target with discounts and promotional events."
-}
+# Form for customer input
+st.subheader('🔍 Find Your Cluster')
+with st.form(key='customer_form'):
+    name = st.text_input('Enter your name')
+    email = st.text_input('Enter your email')
+    age = st.slider('Age', 18, 100, 25)
+    gender = st.selectbox('Gender', ['Male', 'Female'])
+    income = st.slider('Annual Salary (in k$)', 10, 150, 50)
+    spending_score = st.slider('Spending Score (1-100)', 1, 100, 50)
+    submit_button = st.form_submit_button(label='Submit')
 
-# Customer input form
-if page == "Customer Form":
-    st.subheader("Customer Input Form")
-    name = st.text_input("Name")
-    email = st.text_input("Email")
-    age = st.number_input("Age", min_value=18, max_value=100, step=1)
-    gender = st.selectbox("Gender", ['Male', 'Female'])
-    salary = st.number_input("Annual Salary (in k$)", min_value=0, max_value=200, step=1)
-    spending_score = st.number_input("Spending Score (1-100)", min_value=0, max_value=100, step=1)
+    if submit_button:
+        # Preprocess input for prediction
+        gender_value = 0 if gender == 'Male' else 1
+        customer_data = scaler.transform([[gender_value, age, income, spending_score]])
+        customer_cluster = kmeans.predict(customer_data)[0]
+        st.success(f"Thank you, {name}. Your details have been submitted.")
+        st.info(f"You have been placed in Cluster {customer_cluster} ({suggest_marketing_strategy(customer_cluster)}).")
 
-    # Convert Gender to numeric
-    gender_value = 0 if gender == 'Male' else 1
-
-    # Predict the cluster for the customer input
-    customer_data = np.array([[gender_value, age, salary, spending_score]])
-    customer_data_scaled = scaler.transform(customer_data)
-    customer_cluster = kmeans.predict(customer_data_scaled)[0]
-
-    # Customer gets a confirmation message
-    if st.button('Submit'):
-        st.success(f'Thank you, {name}. Your details have been submitted.')
-        st.write(f'You have been placed in Cluster {customer_cluster} ({cluster_labels[customer_cluster]}).')
-
-# Mall Owner Dashboard
-elif page == "Mall Owner Dashboard":
-    st.sidebar.subheader("Mall Owner Login")
-    password = st.sidebar.text_input("Enter mall owner password", type="password")
-    
-    # Only display clusters if password is correct
-    if password == "mallowner123":  # Example password
-        st.subheader("Cluster Distribution for All Customers")
-        
-        # Display the cluster distribution in a bar graph
-        cluster_distribution = pd.DataFrame(dataset['Cluster'].value_counts().sort_index(), columns=['Count'])
-        st.bar_chart(cluster_distribution)
-        
-        # Additional information
-        st.write(cluster_distribution)
-        
-        # Show clusters based on gender, age, salary, and spending score
-        st.subheader("Customer Breakdown per Cluster")
-        cluster_breakdown = dataset.groupby('Cluster').mean()[['Age', 'Annual Income (k$)', 'Spending Score (1-100)']]
-        st.write(cluster_breakdown)
-        
-        # Display marketing actions per cluster
-        st.subheader("Suggested Marketing Actions")
-        for cluster, label in cluster_labels.items():
-            st.write(f"**Cluster {cluster}: {label}**")
-            st.write(marketing_actions[cluster])
-        
-    else:
-        st.error("Incorrect password. Please try again.")
+# Admin view for mall owner to check customer clusters
+st.subheader("Mall Owner Dashboard")
+owner_password = st.text_input("Enter mall owner password", type="password")
+if owner_password == 'mallowner2024':  # A fixed password for simplicity
+    st.subheader('Mall Customer Segmentation App')
+    cluster_distribution = pd.DataFrame(dataset['Cluster'].value_counts().sort_index(), columns=['Count'])
+    st.bar_chart(cluster_distribution)
+    st.write("Customer Breakdown per Cluster")
+    st.write(pd.DataFrame({
+        'Cluster': [0, 1, 2, 3, 4],
+        'Age': [56.47, 39.5, 28.69, 37.89, 27.31],
+        'Annual Income (k$)': [46.09, 85.15, 60.90, 82.12, 38.84],
+        'Spending Score (1-100)': [39.31, 14.05, 70.23, 54.44, 56.21]
+    }))
