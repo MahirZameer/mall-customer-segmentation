@@ -18,76 +18,70 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Add the mall photo as a banner
-st.image("https://images.pexels.com/photos/2767756/pexels-photo-2767756.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260", 
-         use_column_width=True)
-
 # Title and Introduction
-st.title('🌟 Mall Customer Segmentation using K-Means 🌟')
-st.write("""
-This app uses the **k-means clustering algorithm** to segment customers based on demographic and shopping behavior data.
-""")
+st.title('🌟 Mall Customer Segmentation 🌟')
 
-# Load the dataset
-dataset = pd.read_csv('Mall.csv')
+# Collecting customer information
+st.header("Customer Information")
+name = st.text_input("Name")
+email = st.text_input("Email")
+age = st.number_input("Age", min_value=1, max_value=100)
+gender = st.selectbox("Gender", ["Male", "Female"])
+income = st.number_input("Annual Salary (in k$)", min_value=0)
+spending_score = st.slider("Spending Score (1-100)", 1, 100, 50)
 
-# Data Preprocessing
-dataset['Gender'] = dataset['Gender'].map({'Male': 0, 'Female': 1})
-X = dataset[['Gender', 'Age', 'Annual Income (k$)', 'Spending Score (1-100)']].values
+# Gender mapping for KMeans
+gender = 0 if gender == "Male" else 1
+
+# Preprocessing customer input
+input_data = pd.DataFrame([[gender, age, income, spending_score]],
+                          columns=['Gender', 'Age', 'Annual Income (k$)', 'Spending Score (1-100)'])
 scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
+input_scaled = scaler.fit_transform(input_data)
 
-# Fixed number of clusters
-n_clusters = 5
+# K-Means clustering
+kmeans = KMeans(n_clusters=5, random_state=42)
+kmeans.fit(input_scaled)
+cluster = kmeans.predict(input_scaled)[0]
 
-# Apply K-Means Clustering
-kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-kmeans.fit(X_scaled)
-clusters = kmeans.predict(X_scaled)
-dataset['Cluster'] = clusters
+# Cluster naming
+cluster_names = {
+    0: "Older, Low Income, Low Spending",
+    1: "Middle-aged, High Income, Low Spending",
+    2: "Young, Moderate Income, High Spending",
+    3: "Middle-aged, High Income, Moderate Spending",
+    4: "Young, Low Income, Moderate Spending"
+}
 
-# Suggest marketing strategy based on cluster
-def suggest_marketing_strategy(cluster_label):
-    strategies = {
-        0: "Older, Low Income, Low Spending: Suggest discounts and value products to attract.",
-        1: "Middle-aged, High Income, Low Spending: Focus on premium loyalty programs and luxury offers.",
-        2: "Young, Moderate Income, High Spending: Target with trendy products and high-end promotions.",
-        3: "Middle-aged, High Income, Moderate Spending: Offer incentives like mid-tier discounts and loyalty points.",
-        4: "Young, Low Income, Moderate Spending: Offer affordable bundles and special youth-targeted deals.",
-        5: "Older, High Income, High Spending: Promote exclusive luxury items and personalized services."
-    }
-    return strategies.get(cluster_label, "No strategy available")
+# Display result to the customer
+if st.button("Submit"):
+    st.success(f"Thank you, {name}. Your details have been submitted.")
+    st.write(f"You have been placed in Cluster {cluster} ({cluster_names[cluster]}).")
 
-# Form for customer input
-st.subheader('🔍 Find Your Cluster')
-with st.form(key='customer_form'):
-    name = st.text_input('Enter your name')
-    email = st.text_input('Enter your email')
-    age = st.slider('Age', 18, 100, 25)
-    gender = st.selectbox('Gender', ['Male', 'Female'])
-    income = st.slider('Annual Salary (in k$)', 10, 150, 50)
-    spending_score = st.slider('Spending Score (1-100)', 1, 100, 50)
-    submit_button = st.form_submit_button(label='Submit')
+# Mall owner dashboard
+st.sidebar.header("Mall Owner Dashboard")
+view_mode = st.sidebar.selectbox("Select View", ["Customer Form", "Mall Owner Dashboard"])
 
-    if submit_button:
-        # Preprocess input for prediction
-        gender_value = 0 if gender == 'Male' else 1
-        customer_data = scaler.transform([[gender_value, age, income, spending_score]])
-        customer_cluster = kmeans.predict(customer_data)[0]
-        st.success(f"Thank you, {name}. Your details have been submitted.")
-        st.info(f"You have been placed in Cluster {customer_cluster} ({suggest_marketing_strategy(customer_cluster)}).")
-
-# Admin view for mall owner to check customer clusters
-st.subheader("Mall Owner Dashboard")
-owner_password = st.text_input("Enter mall owner password", type="password")
-if owner_password == 'mallowner2024':  # A fixed password for simplicity
-    st.subheader('Mall Customer Segmentation App')
-    cluster_distribution = pd.DataFrame(dataset['Cluster'].value_counts().sort_index(), columns=['Count'])
-    st.bar_chart(cluster_distribution)
-    st.write("Customer Breakdown per Cluster")
-    st.write(pd.DataFrame({
-        'Cluster': [0, 1, 2, 3, 4],
-        'Age': [56.47, 39.5, 28.69, 37.89, 27.31],
-        'Annual Income (k$)': [46.09, 85.15, 60.90, 82.12, 38.84],
-        'Spending Score (1-100)': [39.31, 14.05, 70.23, 54.44, 56.21]
-    }))
+if view_mode == "Mall Owner Dashboard":
+    password = st.sidebar.text_input("Enter mall owner password", type="password")
+    if password == "mallowner123":  # Placeholder password for simplicity
+        st.subheader("Mall Owner Dashboard")
+        st.write("Customer Breakdown per Cluster")
+        # Simulated data to show customer breakdown in each cluster
+        cluster_summary = pd.DataFrame({
+            'Cluster': [0, 1, 2, 3, 4],
+            'Age': [56, 39, 28, 37, 27],
+            'Annual Income (k$)': [46, 85, 60, 82, 38],
+            'Spending Score (1-100)': [39, 14, 70, 54, 56]
+        })
+        st.write(cluster_summary)
+        
+        # Cluster visualization bar chart
+        st.subheader("Cluster Distribution")
+        fig, ax = plt.subplots()
+        ax.bar(cluster_summary['Cluster'], cluster_summary['Spending Score (1-100)'])
+        ax.set_xlabel("Cluster")
+        ax.set_ylabel("Spending Score")
+        st.pyplot(fig)
+    else:
+        st.error("Incorrect password.")
