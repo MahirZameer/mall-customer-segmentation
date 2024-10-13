@@ -14,6 +14,25 @@ st.title('Mall Customer Segmentation App')
 # Add navigation options for the customer and mall owner
 page = st.sidebar.selectbox("Select View", ["Customer Form", "Mall Owner Dashboard"])
 
+# Load Mall.csv dataset for training the KMeans model
+dataset = pd.read_csv('Mall.csv')
+
+# Preprocess the dataset (same as before)
+dataset['Gender'] = dataset['Gender'].map({'Male': 0, 'Female': 1})
+X = dataset[['Gender', 'Age', 'Annual Income (k$)', 'Spending Score (1-100)']].values
+
+# Scale the data
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Train the KMeans model with K=5
+kmeans = KMeans(n_clusters=K, random_state=42)
+kmeans.fit(X_scaled)
+
+# Add the cluster assignment to the dataset
+clusters = kmeans.predict(X_scaled)
+dataset['Cluster'] = clusters
+
 # Customer input form
 if page == "Customer Form":
     st.subheader("Customer Input Form")
@@ -26,21 +45,6 @@ if page == "Customer Form":
 
     # Convert Gender to numeric
     gender_value = 0 if gender == 'Male' else 1
-
-    # Load Mall.csv dataset for training the KMeans model
-    dataset = pd.read_csv('Mall.csv')
-
-    # Preprocess the dataset (same as before)
-    dataset['Gender'] = dataset['Gender'].map({'Male': 0, 'Female': 1})
-    X = dataset[['Gender', 'Age', 'Annual Income (k$)', 'Spending Score (1-100)']].values
-
-    # Scale the data
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-
-    # Train the KMeans model with K=5
-    kmeans = KMeans(n_clusters=K, random_state=42)
-    kmeans.fit(X_scaled)
 
     # Predict the cluster for the customer input
     customer_data = np.array([[gender_value, age, salary, spending_score]])
